@@ -1,0 +1,42 @@
+#include <iostream>
+using namespace std;
+bool isprime(int n)
+{
+    for(int i=2;i<=n-1;i++)
+    {
+        if(n==1)
+        {
+            return false;//checkstatement
+        }
+        if(n%i==0)
+        {
+            return false;
+        }
+        
+        
+        
+    }
+return true;
+    
+}
+int allprime( int n)
+{
+    for(int i=2;i<=n-1;i++)
+    {
+        if(isprime(i))
+        {
+            cout<<i;
+        }
+    }
+    
+}
+
+
+int main()
+{
+    
+    
+    cout<<allprime(7);
+
+    return 0;
+}
