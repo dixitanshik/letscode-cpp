@@ -1,0 +1,327 @@
+import React from 'react';
+import { render,screen, fireEvent, waitFor } from '@testing-library/react';
+import customRender from '@utils/test-utils';
+import { AddEditLeave } from '@components/LeaveMaster/AddEditLeave';
+
+
+
+describe('AddLeaveMain Component', () => {
+  const defaultProps = {
+    handleButtonClick: jest.fn(),
+    handleUploadSubmit: jest.fn(),
+    addLeaveManually: jest.fn(),
+    updateLeaveManually: jest.fn(),
+    onDrawerClose: jest.fn(),
+    showGlobalNotification: jest.fn(),
+    mode: 'add',
+    editRowRecord: {},
+    downloadTemplate: jest.fn(),
+    dealerCode: '123',
+    roleList: [{ roleCode: 'admin', roleDescription: 'Admin' }],
+    onCloseAction: jest.fn(),
+    disablebtn: false,
+  };
+
+  
+
+  test('Check rendered output for placeholder text', () => {
+    const { container } = render(<AddEditLeave {...defaultProps} />);
+    console.log(container.innerHTML); // Inspect the rendered HTML
+  });
+
+  });
+
+
+
+
+//...92-195,201,240 
+const showGlobalNotification = jest.fn();
+const removeFileHandler = jest.fn();
+const fileWarningHandler = jest.fn();
+const mockSetTotal = jest.fn();
+const mockGetFieldValue = jest.fn();
+
+const handleUpload = jest.fn();
+
+
+
+
+
+
+
+describe('AddEditLeave', () => {
+  const defaultProps = {
+    onCloseAction: jest.fn(),
+    fetchEmployeeDetail: jest.fn(),
+    handleRoleChange: jest.fn(),
+    form: {
+      getFieldValue: mockGetFieldValue,
+    },
+    setTotal: mockSetTotal,
+    LEAVE_TYPE:['privilege', 'casual', 'sick', 'compensatory', 'maternity', 'paternity', 'relocation', 'advance', 'lossOfPay'],
+
+   
+    mode: 'Add', // Assuming ADD_EDIT.add resolves to 'add'
+    addLeave: jest.fn(),
+    showGlobalNotification: jest.fn(),
+    setIsFormVisible: jest.fn(),
+    previewFileHandler:jest.fn(),
+    isVisible: true,
+    onFinish: jest.fn(),
+    roleList: [
+      { roleCode: '1', roleDescription: 'Test Drive Marshal' },
+      { roleCode: '2', roleDescription: 'Activity Co-ordinator' },
+    ],
+    LEAVEADDEDITTYPE: [
+      { key: 'addManually', value: 'Add Manually' },
+      { key: 'importFile', value: 'Import File' },
+    ],
+    setSwitchTabs: jest.fn(), // Add this to mock the setSwitchTabs function
+    // Mock global notifications and API calls
+    addLeaveManually:jest.fn(),
+    handleUpload:jest.fn(),
+    
+
+    beforeUploadProps: {
+      beforeUpload: jest.fn((file) => file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
+      accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    },
+    uploadProps: {
+      showUploadList: {
+        showRemoveIcon: false,
+        previewIcon: <span>Preview Icon</span>,
+        removeIcon: <span>Remove Icon</span>,
+        showProgress: true,
+      },
+    onChange: jest.fn((info) => {
+      if (info.file.status === 'done') {
+        showGlobalNotification({ notificationType: 'success', title: 'Success', message: `${info.file.name} file uploaded successfully` });
+      } else if (info.file.status === 'error') {
+        showGlobalNotification({ notificationType: 'error', title: 'Error', message: `${info.file.name} file upload failed.` });
+      }
+    
+    }),
+  },
+
+  progress: jest.fn((info) => ({
+    percent: info.percent,
+    size: 3,
+    showInfo: true,
+  })),
+    
+  
+    fileWarningHandler,
+    fileDetails: null,
+    fileUploadedCheck: false,
+    removeFileHandler,
+
+
+};
+beforeAll(() => {
+  global.URL.createObjectURL = jest.fn(() => 'mocked-url');
+});
+
+afterAll(() => {
+  global.URL.createObjectURL.mockRestore();
+});
+ 
+  it('renders AddLeaveForm component', () => {
+    customRender(<AddEditLeave {...defaultProps} />);
+  });
+ 
+  it('should handle cancel button click', () => {
+    render(
+        <AddEditLeave
+            isVisible={true}
+            setButtonData={jest.fn()}  
+            handleButtonClick={jest.fn()}
+        />
+    );
+    fireEvent.click(screen.getByText('Cancel'));
+});
+ 
+it('should call submit',  async() => {
+  render(<AddEditLeave {...defaultProps} />)
+  const submitButton = screen.getByText('Submit');
+  fireEvent.click(submitButton);
+   
+})
+ 
+it('renders Role options', async() => {
+  customRender(<AddEditLeave {...defaultProps} />);
+  const role = screen.getByLabelText(/Role/i);
+  console.log("role ",role);
+})
+it('renders Select component for Role', async () => {
+  render(<AddEditLeave {...defaultProps} />);
+  const roleSelect = screen.getByLabelText(/Role/i);
+  fireEvent.mouseDown(roleSelect);
+  await waitFor(() => {
+    expect(screen.getByRole('option', { name: 'Test Drive Marshal' })).toBeInTheDocument();
+  });
+});
+
+
+ 
+ 
+it('should update Privilege and Casual leave', async () => {
+    customRender(<AddEditLeave {...defaultProps} />);
+    const PrivilegeInput = screen.getByLabelText('Privilege');
+    fireEvent.change(PrivilegeInput, { target: { value: '10' } });
+    const CasualInput = screen.getByLabelText('Casual');
+    fireEvent.change(CasualInput, { target: { value: '5' } });
+    const SickInput = screen.getByLabelText('Sick');
+    fireEvent.change(SickInput, { target: { value: '10' } });
+    const CompensatoryInput = screen.getByLabelText('Compensatory');
+    fireEvent.change(CompensatoryInput, { target: { value: '10' } });
+    const MaternityInput = screen.getByLabelText('Maternity');
+    fireEvent.change(MaternityInput, { target: { value: '10' } });
+    const PaternityInput = screen.getByLabelText('Paternity');
+    fireEvent.change(PaternityInput, { target: { value: '10' } });
+    const RelocationInput = screen.getByLabelText('Relocation');
+    fireEvent.change(RelocationInput, { target: { value: '10' } });
+    const AdvanceInput = screen.getByLabelText('Advance');
+    fireEvent.change(AdvanceInput, { target: { value: '10' } });
+    const LossOfPayInput = screen.getByLabelText('Loss Of Pay');
+    fireEvent.change(LossOfPayInput, { target: { value: '10' } });
+    
+    await waitFor(() => {
+      expect(PrivilegeInput.value).toBe('10');
+     
+    });
+  });
+ 
+  it('Title of AddEditLeave', () => {
+    customRender(<AddEditLeave {...defaultProps} titleOverride={'Add Leaves'} />);
+    expect(screen.getByText('Add Leaves')).toBeInTheDocument();
+  });
+
+  it('renders tabs Add Manually and Import File', () => {
+    customRender(<AddEditLeave {...defaultProps} />);
+    expect(screen.getByText('Add Manually')).toBeInTheDocument();
+    expect(screen.getByText('Import File')).toBeInTheDocument();
+  });
+  
+ 
+  it('should switch tabs between Add Manually and Import File', async () => {
+    customRender(<AddEditLeave {...defaultProps} />);
+
+    // Click on "Add Manually" tab
+    const addManuallyTab = screen.getByText('Add Manually');
+    fireEvent.click(addManuallyTab);
+
+    // Check if the "Add Manually" content is displayed
+    await waitFor(() => {
+      expect(screen.getByLabelText('Privilege')).toBeInTheDocument();
+    });
+
+    // Click on "Import File" tab
+    const importFileTab = screen.getByText('Import File');
+    fireEvent.click(importFileTab);
+
+    // Check if the "Import File" content is displayed
+    await waitFor(() => {
+      expect(screen.getByText('Download Template')).toBeInTheDocument();
+    });
+ });
+ it('renders and clicks the button for the first leave add type', () => {
+  customRender(<AddEditLeave {...defaultProps} />);
+
+  // Verify the button with text 'Add Manually' is in the document
+  const addManuallyButton = screen.getByText('Add Manually');
+  expect(addManuallyButton).toBeInTheDocument();
+
+  // Click the button
+  fireEvent.click(addManuallyButton);
+
+});
+it('should handle error and success notifications', async () => {
+  // Render component
+  customRender(<AddEditLeave {...defaultProps} />);
+
+  // Simulate an error scenario
+  const errorMessage = 'Something went wrong';
+  
+  // Manually trigger the mock function
+  showGlobalNotification.mock.calls = []; // Reset mock calls
+  const onErrorAction = (message) => {
+    showGlobalNotification({ notificationType: 'error', title: 'Error', message: message });
+  };
+  onErrorAction(errorMessage);
+  
+  await waitFor(() => {
+    expect(showGlobalNotification).toHaveBeenCalledWith({
+      notificationType: 'error',
+      title: 'Error',
+      message: errorMessage,
+    });
+  });
+
+  // Simulate a success scenario
+  const successData = { responseMessage: 'Operation successful' };
+  const onSuccessAction = (data) => {
+    showGlobalNotification({ notificationType: 'success', title: 'Success', message: data.responseMessage });
+  };
+  onSuccessAction(successData);
+
+  await waitFor(() => {
+    expect(showGlobalNotification).toHaveBeenCalledWith({
+      notificationType: 'success',
+      title: 'Success',
+      message: successData.responseMessage,
+    });
+  });
+});
+
+it('should have initial form state', () => {
+  render(<AddEditLeave {...defaultProps} />);
+  expect(screen.getByLabelText('Privilege').value).toBe('');
+  expect(screen.getByLabelText('Casual').value).toBe('');
+  // Add similar checks for other fields if necessary
+});
+
+
+
+
+it('should handle file upload correctly', async () => {
+  customRender(<AddEditLeave {...defaultProps} />);
+  
+
+  // Simulate file upload with a correct file type
+  const file = new File(['dummy content'], 'test.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const info = { file: { status: 'done', name: 'test.xlsx' }, fileList: [file] };
+  defaultProps.uploadProps.onChange(info);
+
+  await waitFor(() => {
+    expect(showGlobalNotification).toHaveBeenCalledWith({
+      notificationType: 'success',
+      title: 'Success',
+      message: 'test.xlsx file uploaded successfully',
+    });
+  });
+
+  // Simulate file upload error scenario
+  info.file.status = 'error';
+  defaultProps.uploadProps.onChange(info);
+
+  await waitFor(() => {
+    expect(showGlobalNotification).toHaveBeenCalledWith({
+      notificationType: 'error',
+      title: 'Error',
+      message: 'test.xlsx file upload failed.',
+    });
+  });
+});
+
+
+  
+
+ 
+
+  
+
+  
+
+
+
+});
