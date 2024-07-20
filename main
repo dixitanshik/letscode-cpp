@@ -1,0 +1,296 @@
+import React, { useState, useMemo, useEffect } from 'react';
+import { tableColumn } from './tableColumn';
+import { connect } from 'react-redux';
+import { bindActionCreators } from 'redux';
+import { leaveMasterDataActions } from 'store/actions/data/leaveMaster';
+import LeaveMasterHeader from './LeaveMasterHeader';
+import { translateContent } from 'utils/translateContent';
+import { AddEditLeave } from './AddEditLeave';
+import { Row, Col, Form, Button, ConfigProvider, Empty } from 'antd';
+import { showGlobalNotification } from 'store/actions/notification';
+import { ADD_EDIT } from 'constants/LeaveType';
+import { PlusOutlined } from '@ant-design/icons';
+import { DataTable } from 'utils/dataTable';
+const mapStateToProps = (state) => {
+    const {
+        data: {
+            LeaveMaster: { data, roleList, dealerCode },
+        },
+        common: {
+            Header: {
+                data: { dealerId },
+            },
+        },
+    } = state;
+
+    let returnValue = {
+        data: data,
+        roleList,
+        dealerId,
+        dealerCode,
+    };
+    return returnValue;
+};
+
+const mapDispatchToProps = (dispatch) => ({
+    dispatch,
+    ...bindActionCreators(
+        {
+            fetchList: leaveMasterDataActions.fetchList,
+            addLeaveManually: leaveMasterDataActions.addLeaveManually,
+            updateLeaveManually: leaveMasterDataActions.updateLeaveManually,
+            downloadExcelTemplate: leaveMasterDataActions.downloadExcelTemplate,
+            uploadExcelTemplate: leaveMasterDataActions.uploadExcelTemplate,
+            fetchRolesList: leaveMasterDataActions.fetchRolesList,
+            fetchLoggedInDealerCode: leaveMasterDataActions.fetchLoggedInDealerCode,
+            showGlobalNotification,
+        },
+        dispatch
+    ),
+});
+
+const LeaveMasterPage = (props) => {
+    const { data, roleList, dealerId, dealerCode } = props;
+    const { fetchList, addLeaveManually, showGlobalNotification, updateLeaveManually, downloadExcelTemplate, uploadExcelTemplate, fetchRolesList, fetchLoggedInDealerCode } = props;
+    const [isLoading, setDataLoading] = useState(false);
+    const [isFormVisible, setIsFormVisible] = useState(false);
+    const [Role, headerSelectedRole] = useState(null);
+    const [mode, setFormMode] = useState(ADD_EDIT.add);
+    const [editRowRecord, setSpecificRow] = useState(null);
+    const [pagesize, setPageSize] = useState(0);
+    const [currentPage, setCurrentPage] = useState('1');
+    const [appliedfilterdata, setAppliedFilterData] = useState(null);
+    const [disablebtn, setDisableBtn] = useState(true);
+    const [updateRecords, setUpdatedRecords] = useState(false);
+    const [refersh, setRefresh] = useState(false);
+    const [form] = Form.useForm();
+    const extraParams = useMemo(() => {
+        setUpdatedRecords(false);
+        setRefresh(false);
+        const defaultParams = [
+            {
+                key: 'page',
+                title: 'page',
+                value: currentPage === '1' ? '0' : `${currentPage - 1}`,
+                canRemove: true,
+                filter: false,
+            },
+            {
+                key: 'size',
+                title: 'size',
+                value: pagesize,
+                canRemove: true,
+                filter: false,
+            },
+            {
+                key: 'dealerCode',
+                title: 'dealerCode',
+                value: dealerCode,
+                canRemove: true,
+                filter: false,
+            },
+        ];
+
+        if (Role) {
+            const roleParam = {
+                key: 'role',
+                title: 'Role',
+                value: Role,
+                canRemove: true,
+                filter: true,
+            };
+            return [...defaultParams, roleParam];
+        } else {
+            return defaultParams;
+        }
+    }, [Role, pagesize, currentPage, dealerCode]);
+
+    const handleLeaveEditClick = (record) => {
+        setSpecificRow(record);
+        setFormMode(ADD_EDIT.edit);
+        setIsFormVisible(true);
+    };
+
+    const setIsLoading = (isloading) => {
+        setDataLoading(isloading);
+    };
+
+    useEffect(() => {
+        fetchList({ customURL: '', setIsLoading, extraParams: extraParams });
+    }, [extraParams, fetchList, Role, pagesize, currentPage, dealerCode, updateRecords, refersh]);
+
+    useEffect(() => {
+        fetchRolesList({ data: '' });
+    }, [fetchRolesList]);
+
+    useEffect(() => {
+        if (dealerId) {
+            fetchLoggedInDealerCode({ dealerId, data: '' });
+        }
+    }, [dealerId, fetchLoggedInDealerCode]);
+
+    const setPage = (page) => {
+        const { current, pageSize } = page;
+        setCurrentPage(current);
+        setPageSize(pageSize);
+    };
+    const handleButtonClick = () => {
+        setIsFormVisible(true);
+    };
+
+    const tableProps = {
+        tableColumn: tableColumn(handleLeaveEditClick),
+        tableData: data?.data || [],
+        showAddButton: true,
+        setPage,
+        page: pagesize,
+        totalRecords: data?.totalRecords,
+        dynamicPagination: true,
+        filterString: { current: +currentPage },
+        handleButtonClick,
+        isLoading,
+        scroll: { x: 800 },
+    };
+
+    useEffect(() => {
+        if (data && data?.data?.length) {
+            setIsLoading(true);
+        } else {
+            setIsLoading(false);
+        }
+    }, [data]);
+
+    const onCloseAction = () => {
+        setIsFormVisible(false);
+        setFormMode(ADD_EDIT.add);
+    };
+    const onDrawerClose = () => {
+        setIsFormVisible(false);
+        setUpdatedRecords(true);
+    };
+    const downloadTemplate = () => {
+        downloadExcelTemplate();
+    };
+    const onSuccessAction = (data) => {
+        setIsFormVisible(false);
+        setDisableBtn(data);
+    };
+    const onErrorAction = (data) => {
+        setDisableBtn(data);
+    };
+    const handleUploadSubmit = (option) => {
+        if (dealerCode) {
+            const params = {
+                option,
+                dealerCode,
+                showGlobalNotification,
+                onSuccessAction,
+                onErrorAction,
+            };
+            uploadExcelTemplate(params);
+        }
+    };
+    const addLeaveProps = {
+        isVisible: isFormVisible,
+        titleOverride: mode === ADD_EDIT.add ? translateContent('leaveMaster.label.addLeaves') : translateContent('leaveMaster.label.editLeaves'),
+        onCloseAction,
+        addLeaveManually,
+        onDrawerClose,
+        showGlobalNotification,
+        mode,
+        editRowRecord,
+        updateLeaveManually,
+        downloadTemplate,
+        dealerCode,
+        roleList,
+        handleUploadSubmit,
+        disablebtn,
+    };
+    console.log("addLeaveProps",addLeaveProps);
+
+    const addleaveDrawer = () => {
+        setIsFormVisible(true);
+    };
+
+    const selectedRole = (id) => {
+        headerSelectedRole(id);
+        setAppliedFilterData({ role: id });
+    };
+
+    const removeFilter = (filter) => {
+        setAppliedFilterData((prevData) => {
+            const { [filter]: removedFilter, ...rest } = prevData;
+            return Object.keys(rest).length === 0 ? null : rest;
+        });
+        form.resetFields();
+        headerSelectedRole(null);
+    };
+
+    const handleResetFilter = () => {
+        setAppliedFilterData(null);
+        form.resetFields();
+        headerSelectedRole(null);
+    };
+
+    const refreshHandler = () => {
+        setRefresh(true);
+       
+    }
+
+    const headerProps = {
+        refreshHandler,
+        addleaveDrawer,
+        selectedRole,
+        roleList,
+        extraParams,
+        removeFilter,
+        handleResetFilter,
+        appliedfilterdata,
+        form,
+    };
+    const addLeaveHandler = () => {
+        setIsFormVisible(true);
+    };
+
+    return (
+        <>
+            <LeaveMasterHeader {...headerProps} tableData={data} />
+            <Row gutter={20}>
+                <Col xs={24} sm={24} md={24} lg={24} xl={24} xxl={24}>
+                    <ConfigProvider
+                        renderEmpty={() => (
+                            <Empty
+                                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                imageStyle={{
+                                    height: '20%',
+                                }}
+                                description={
+                                    !data?.data?.length && (
+                                        <div>
+                                            {' '}
+                                            <span>{translateContent('leaveManagement.text.noRecordFound')}</span>{' '}
+                                            <p>
+                                                {translateContent('leaveManagement.text.please')} <b>“{translateContent('leaveManagement.text.addNewLeave')}“</b> {translateContent('leaveManagement.text.usingBelowBtn')}
+                                            </p>
+                                        </div>
+                                    )
+                                }
+                            >
+                                {!data?.data?.length && (
+                                    <Button icon={<PlusOutlined />} type="primary" danger onClick={addLeaveHandler}>
+                                        {translateContent('leaveManagement.text.addLeave')}
+                                    </Button>
+                                )}
+                            </Empty>
+                        )}
+                    >
+                        <DataTable {...tableProps} />
+                    </ConfigProvider>
+                </Col>
+            </Row>
+            <AddEditLeave {...addLeaveProps} />
+        </>
+    );
+};
+
+export const LeaveMasterMain = connect(mapStateToProps, mapDispatchToProps)(LeaveMasterPage);
