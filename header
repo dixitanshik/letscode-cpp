@@ -1,0 +1,96 @@
+import React from 'react';
+import { render, screen, fireEvent } from '@testing-library/react';
+import LeaveMasterHeader from '@components/LeaveMaster/LeaveMasterHeader';
+
+// Mock translateContent function
+jest.mock('utils/translateContent', () => ({
+  translateContent: jest.fn().mockImplementation((key) => {
+    const translations = {
+      'leaveMaster.label.selectRole': 'Select Role',
+      'leaveMaster.label.addLeave': 'Add Leave',
+      'global.advanceFilter.appliedAdvanceFilter': 'Applied Advance Filter',
+      'global.buttons.clear': 'Clear'
+    };
+    return translations[key] || key;
+  }),
+}));
+
+describe('LeaveMasterHeader Component', () => {
+  // Test 1: Rendering the component without crashing
+  it('renders without crashing', () => {
+    render(<LeaveMasterHeader />);
+  });
+
+  // Test 2: Rendering Select component with role options
+  it('renders Select component with role options', () => {
+    // Mock roleList data
+    const roleList = [
+      { id: 1, roleCode: 'admin', roleDescription: 'Admin Role' },
+      { id: 2, roleCode: 'user', roleDescription: 'User Role' },
+    ];
+
+    // Render the component with roleList prop
+    render(<LeaveMasterHeader roleList={roleList} />);
+
+    // Find the Select component by its placeholder text
+    const selectElement = screen.getByText('Select Role');
+    expect(selectElement).toBeInTheDocument();
+
+    // Test if role options are rendered correctly
+    fireEvent.mouseDown(selectElement); // Use mouseDown instead of click for Select component
+    roleList.forEach(role => {
+      expect(screen.getByText(role.roleDescription)).toBeInTheDocument();
+    });
+  });
+
+  // Test 3: Handling refreshHandler function on sync button click
+  it('calls refreshHandler on sync button click', () => {
+    // Mock refreshHandler function using jest.fn()
+    const refreshHandlerMock = jest.fn();
+
+    // Render the component with refreshHandler prop
+    render(<LeaveMasterHeader refreshHandler={refreshHandlerMock} />);
+
+    // Find the Sync button by its role (button) and icon (SyncOutlined)
+    const syncButton = screen.getByRole('button', { name: /sync/i });
+
+    // Simulate a click event on the Sync button
+    fireEvent.click(syncButton);
+
+    // Assert that the refreshHandler function is called
+    expect(refreshHandlerMock).toHaveBeenCalled();
+  });
+
+  // Test 4: Handling addleaveDrawer function on add button click when tableData is not empty
+  it('calls addleaveDrawer on add button click when tableData is not empty', () => {
+    // Mock addleaveDrawer function using jest.fn()
+    const addleaveDrawerMock = jest.fn();
+
+    // Mock tableData with a single item
+    const tableData = [{ id: 1, name: 'Leave 1' }];
+
+    // Render the component with tableData and addleaveDrawer prop
+    render(<LeaveMasterHeader tableData={tableData} addleaveDrawer={addleaveDrawerMock} />);
+
+    // Find the Add button by its role (button) and icon (PlusOutlined)
+    const addButton = screen.getByRole('button', { name: /add leave/i });
+
+    // Simulate a click event on the Add button
+    fireEvent.click(addButton);
+
+    // Assert that the addleaveDrawer function is called
+    expect(addleaveDrawerMock).toHaveBeenCalled();
+  });
+
+  // Test 5: Handling handleResetFilter function on clear button click
+  it('calls handleResetFilter on clear button click', () => {
+    const handleResetFilterMock = jest.fn();
+
+    render(<LeaveMasterHeader handleResetFilter={handleResetFilterMock} appliedfilterdata={true} extraParams={[{ key: 'department', title: 'Department', value: 'HR', canRemove: true }]} />);
+
+    const clearButton = screen.getByRole('button', { name: /clear/i });
+    fireEvent.click(clearButton);
+
+    expect(handleResetFilterMock).toHaveBeenCalled();
+  });
+});
