@@ -1,0 +1,107 @@
+import React from 'react';
+import { screen, fireEvent, waitFor, render } from '@testing-library/react';
+import customRender from '@utils/test-utils';
+import HolidayDetailForm from '@components/Mile/TrainingLocation/HolidayDetailForm';
+import { message, Upload,Col,Button } from 'antd';
+import { RxCross2 } from 'react-icons/rx';
+import { translateContent } from 'utils/translateContent';
+
+const clearWarning=jest.fn();
+const setup = () => {
+  render(
+    <Col xs={12} sm={12} md={12} lg={12} xl={12} style={{ textAlign: 'right' }}>
+      <Button data-testid="clear" onClick={clearWarning} type="link" icon={<RxCross2 />}></Button>
+    </Col>
+  );
+};
+
+const holidayFormProps = {
+  isVisible: true,
+  titleOverride: 'Holiday Details',
+  onCloseAction: jest.fn(),
+  onSave: jest.fn(),
+  onDrawerClose: jest.fn(),
+  showGlobalNotification: jest.fn(),
+  mode: 'Add',
+  editRowRecord: null,
+  dealerCode: 'SN010391',
+  downloadTemplate: jest.fn(),
+  handleUploadSubmit: jest.fn(),
+  disablebtn: true,
+  tabChange:true, 
+  setSwitchtabs:jest.fn(),
+  clearWarning:jest.fn(),
+  onChange: (info) => {
+    if (info.file.status === 'done') {
+      message.success(`${info.file.name} file uploaded successfully`);
+    } else if (info.file.status === 'error') {
+      message.error(`${info.file.name} file upload failed.`);
+    }
+  },
+  
+};
+
+jest.mock('antd', () => ({
+  ...jest.requireActual('antd'),
+  message: {
+    error: jest.fn(),
+    success: jest.fn(),
+  },
+}));
+
+describe('HolidayDetailForm', () => {
+  it('renders the holiday form component', () => {
+    customRender(<HolidayDetailForm {...holidayFormProps} />);
+    expect(screen.getByText(/Holiday/i)).toBeInTheDocument();
+  });
+  it('download file functionality in import Tab', async () => {
+    customRender(<HolidayDetailForm {...holidayFormProps} />);
+    const importTab = screen.getByText(/Import File/i);
+    fireEvent.click(importTab);
+    const DownloadBtn = screen.getByRole('button', { name: /Download Template/i });
+    fireEvent.click(DownloadBtn);
+    expect(holidayFormProps.downloadTemplate).toBeCalled();
+    
+});
+it('displays warning message when no file is uploaded and remove warning message on click of cross icon', async () => {
+  customRender(<HolidayDetailForm {...holidayFormProps} />);
+  const importTab = screen.getByText(/Import File/i);
+  fireEvent.click(importTab);
+  expect(screen.getByText(/Please upload file here./i)).toBeInTheDocument();
+  setup();
+  const removeicon = screen.getByTestId('clear');
+  fireEvent.click(removeicon);
+  expect(clearWarning).toHaveBeenCalledTimes(1);
+});
+it('validates file before upload', async () => {
+  const beforeUploadMock = jest.fn((file) => {
+      const isExcel = file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      if (!isExcel) {
+          message.error(`${file.name} is not a correct file format`);
+      }
+      return isExcel || Upload.LIST_IGNORE;
+  });
+  customRender(<HolidayDetailForm {...holidayFormProps} />);
+  const importTab = screen.getByText(/Import File/i);
+  fireEvent.click(importTab);
+
+  const fileInput = screen.getByTestId('fileInput');
+  expect(fileInput).toBeInTheDocument();
+  const file = new File(['sample'], 'sample.csv', { type: 'text/csv' });
+  fireEvent.change(fileInput, { target: { files: [file] } });
+}); 
+it('should handle file upload progress', async () => {
+  customRender(<HolidayDetailForm {...holidayFormProps} />);
+  const importTab = screen.getByText(/Import File/i);
+  fireEvent.click(importTab);
+
+  const fileInput = screen.getByTestId('fileInput');
+  const file = new File(['dummy content'], 'example.xlsx', { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+  fireEvent.change(fileInput, { target: { files: [file] } });
+});
+
+
+
+
+});
