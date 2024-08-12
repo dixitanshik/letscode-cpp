@@ -1,0 +1,185 @@
+import { preparePlaceholderSelect } from 'utils/preparePlaceholder';
+import { Row, Col, Form, Input, Divider, DatePicker, Button, Card, Typography, Space, message, Upload } from 'antd';
+import { translateContent } from 'utils/translateContent';
+import { RxCross2 } from 'react-icons/rx';
+import { LEAVE_ADD_TYPE } from 'constants/EmployeeType';
+import style from './TrainingLocation.module.scss';
+import { useState } from 'react';
+import { UploadBoxIcon } from 'Icons';
+//import Dragger from 'antd/es/upload/Dragger';
+import { StopOutlined } from '@ant-design/icons';
+import moment from 'moment';
+import { FiEye } from 'react-icons/fi';
+import { AiOutlineCloseCircle } from 'react-icons/ai';
+const { Text, Paragraph, Title } = Typography;
+const { Dragger } = Upload;
+const HolidayDetailForm = (props) => {
+    const { holidayMasterDTO, setholidayMasterDTO, divisionCode, downloadTemplate, handleUpload, showWarrning, clearWarning,  tabChange, 
+        setSwitchtabs } = props;
+    
+    const [date, setDate] = useState('');
+    const [holiday, setHoliday] = useState('');
+
+    const manualLeaveHandler = () => {
+        const updatedHolidayMasterDTO = [...holidayMasterDTO];
+        updatedHolidayMasterDTO.push({
+            holidayDay: moment(date.$d).format('dddd'),
+            holidayDate: moment(date).format('YYYY-MM-DD'),
+            holidayName: holiday,
+            holidayYear: moment(date).format('YYYY'),
+            divisionCode,
+            remarks:"N/A"
+        });
+        setholidayMasterDTO(updatedHolidayMasterDTO);
+    };
+
+    const dateValHandler = (val) => {
+        setDate(val);
+    };
+
+    const holidayNameHandler = (e) => {
+        setHoliday(e.target.value);
+    };
+
+    const uploadProps = {
+        showUploadList: {
+            showRemoveIcon: true,
+            showDownloadIcon: true,
+            previewIcon: <FiEye />,
+            removeIcon: <AiOutlineCloseCircle />,
+            showProgress: true,
+        },
+        beforeUpload: (file) => {
+            const isExcel = file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+            if (!isExcel) {
+                message.error(`${file.name} is not a correct file format`);
+            }
+            return isExcel || Upload.LIST_IGNORE;
+        },
+        progress: { size: 3, showInfo: true },
+        accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        onChange: (info) => {
+            if (info.file.status !== 'uploading') {
+                console.log(info.file, info.fileList);
+            }
+            if (info.file.status === 'done') {
+                message.success(`${info.file.name} file uploaded successfully`);
+            } else if (info.file.status === 'error') {
+                message.error(`${info.file.name} file upload failed.`);
+            }
+        },
+    };
+
+    return (
+        <>
+            <Row className={style.leaveTab}>
+                <>
+                    {LEAVE_ADD_TYPE?.map((item) => (
+                        <Button key={item.key} type="link" style={{ marginRight: '8px' }} className={tabChange === item.key ? style.ActiveTab : style.InactiveTab} onClick={() => setSwitchtabs(item.key)}>
+                            {item.value}
+                        </Button>
+                    ))}
+                </>
+            </Row>
+
+            {tabChange === LEAVE_ADD_TYPE[0].key ? (
+                <Row gutter={20}>
+                    <Col xs={6} sm={6} md={6} lg={6} xl={6}>
+                        <Form.Item
+                            label={translateContent('trainingLocation.label.date')}
+                            rules={[
+                                {
+                                    required: true,
+                                    message: 'Date field is required',
+                                },
+                            ]}
+                            name="date"
+                        >
+                            <DatePicker style={{ display: 'auto', width: '100%' }} placeholder={preparePlaceholderSelect(translateContent())} onChange={dateValHandler} />
+                        </Form.Item>
+                    </Col>
+
+                    <Col xs={6} sm={6} md={6} lg={6} xl={6} xxl={6}>
+                        <Form.Item label={translateContent('trainingLocation.label.day')} name="day">
+                            <Input value={date ? moment(date.$d).format('dddd') : moment().format('dddd')} disabled placeholder={date ? moment(date.$d).format('dddd') : moment().format('dddd')} />
+                        </Form.Item>
+                    </Col>
+
+                    <Col xs={6} sm={6} md={6} lg={6} xl={6} xxl={6}>
+                        <Form.Item label={translateContent('trainingLocation.label.holidayName')} name="holidayName">
+                            <Input maxLength={50} placeholder={translateContent('trainingLocation.placeholder.enterName')} onChange={holidayNameHandler} />
+                        </Form.Item>
+                    </Col>
+                    <Col xs={24} sm={24} md={24} lg={24} xl={24} xxl={24} style={{ marginBottom: 15 }}>
+                        <Button aria-label='date'type="primary" onClick={manualLeaveHandler} disabled={!date}>
+                            {translateContent('trainingLocation.text.add')}
+                        </Button>
+                    </Col>
+                    <Col xs={24} sm={24} md={24} lg={24} xl={24} xxl={24}>
+                        {' '}
+                        <Divider />
+                    </Col>
+
+                    <Col xs={24} sm={24} md={24} lg={24} xl={24} xxl={24}>
+                        {holidayMasterDTO.length > 0 &&
+                            holidayMasterDTO.map((item) => (
+                                <Card>
+                                    <Row>
+                                        <Col xs={12} sm={12} md={12} lg={12} xl={12} xxl={12}>
+                                            <Text strong>{item?.holidayName}</Text>
+                                            <Paragraph>
+                                                Date: <Text strong> {moment(item?.holidayDate).format('DD MMMM YYYY')}</Text> | Day: <Text strong>{item?.holidayDay}</Text>
+                                            </Paragraph>
+                                        </Col>
+                                        <Col xs={12} sm={12} md={12} lg={12} xl={12} xxl={12} style={{ textAlign: 'right' }}>
+                                            <Button type="link" icon={<RxCross2 />}></Button>
+                                        </Col>
+                                    </Row>
+                                </Card>
+                            ))}
+                    </Col>
+                </Row>
+            ) : (
+                <Row gutter={20}>
+                    <Col xs={24} sm={24} md={24} lg={24} xl={24}>
+                        <Row gutter={20}>
+                            <Col xs={12} sm={12} md={12} lg={12} xl={12}>
+                                {translateContent('trainingLocation.text.Note')}
+                            </Col>
+                            <Col xs={12} sm={12} md={12} lg={12} xl={12} style={{ textAlign: 'right' }}>
+                                <Button onClick={downloadTemplate}>{translateContent('trainingLocation.text.downloadTemplate')}</Button>
+                            </Col>
+                        </Row>
+                    </Col>
+
+                    <Col xs={24} sm={24} md={24} lg={24} xl={24} className={style.uploadBorder}>
+                        <Dragger {...uploadProps} data-testid='fileInput' multiple={false} customRequest={handleUpload}>
+                            <Space direction="vertical">
+                                <UploadBoxIcon />
+                                <div>
+                                    <Title level={5}> {translateContent('trainingLocation.text.uploadText')}</Title>
+                                    <Text> {translateContent('trainingLocation.text.fileSizeInfo')}</Text>
+                                </div>
+                                <Space>
+                                    <Button aria-label='upload' type="primary"> {translateContent('trainingLocation.text.uploadFile')}</Button>
+                                </Space>
+                            </Space>
+                        </Dragger>
+                    </Col>
+                    {tabChange === LEAVE_ADD_TYPE[1].key && showWarrning && <Col xs={24} sm={24} md={24} lg={24} xl={24}>
+                        <Row gutter={20} className={style.warningUpload}>
+                            <Col xs={12} sm={12} md={12} lg={12} xl={12} className={style.note}>
+                                <StopOutlined /> {translateContent('trainingLocation.text.warningMsg')}
+                            </Col>
+                            <Col xs={12} sm={12} md={12} lg={12} xl={12} style={{ textAlign: 'right' }}>
+                                <Button data-testid='clear' onClick={clearWarning} type="link" icon={<RxCross2 />}></Button>
+                            </Col>
+                        </Row>
+                    </Col>}
+                </Row>
+            )}
+        </>
+    );
+};
+
+export default HolidayDetailForm;
