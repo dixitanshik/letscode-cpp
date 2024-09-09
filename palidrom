@@ -1,0 +1,30 @@
+#include <iostream>
+#include <cstring>
+using namespace std;
+
+bool ispalindrome(char word[],int n)
+{
+    int st=0;int end=n-1;
+    while(st<=end)
+    {
+        if(word[st]!=word[end])
+        {
+            
+            cout<<"not a palindrome"<<endl;
+            return false;
+        }
+        st++;
+        end--;
+
+    }
+  
+    cout<<"is a palindrome"<<endl;
+     return true;
+}
+int main()
+{
+    
+    char word[] = {'c', 'o', 'd', 'e', '\0'};
+    ispalindrome(word,strlen(word));
+    
+}
